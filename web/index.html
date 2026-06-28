@@ -8,9 +8,25 @@
   <meta name="description" content="Repair Management System">
   <title>Repair System</title>
   <link rel="manifest" href="manifest.json">
-  <!-- flutter_bootstrap.js يتم توليده تلقائياً أثناء البناء ويحتوي على كل الإعدادات الصحيحة -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter.js" defer></script>
 </head>
 <body>
+  <div id="loading" style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f3f4f6;">
+    <h3 style="font-family:sans-serif;color:#333;">جاري تشغيل النظام...</h3>
+  </div>
+  <script>
+    window.addEventListener('load', function(ev) {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: null,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -42,7 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && isLoggingIn) {
         return AppRoutes.dashboard;
       }
-      return null;
+      return AppRoutes.dashboard;
     },
     routes: [
       GoRoute(
