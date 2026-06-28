@@ -12,24 +12,37 @@ else
   echo "Flutter SDK already exists, skipping download."
 fi
 
-# 2. إعداد المسارات (وضعه في البداية لضمان استخدام النسخة المحملة)
+# 2. إعداد المسارات (ضمان استخدام النسخة المحملة محلياً)
 export FLUTTER_ROOT="$(pwd)/flutter"
 export PATH="$FLUTTER_ROOT/bin:$PATH"
 
-# 3. التأكد من تفعيل الويب
+# عرض نسخة فلاتر للتأكد والتشخيص
+flutter --version
+
+# 3. التأكد من تفعيل الويب وتحميل المكونات اللازمة
 echo "Enabling Web support..."
 flutter config --no-analytics
 flutter config --enable-web
+flutter precache --web
 
-# 4. جلب المكتبات
+# 4. تحديث ملفات المشروع لدعم الويب بشكل سليم
+echo "Ensuring web project files are up to date..."
+flutter create . --platforms web
+
+# 5. جلب المكتبات
 echo "Fetching dependencies..."
 flutter pub get
 
-# 5. بناء نسخة الويب (أمر السطر الواحد المضمون لتجنب أخطاء التنسيق)
+# 6. بناء نسخة الويب
 echo "Building Web application..."
-flutter build web --release --web-renderer html --base-href / --dart-define=SUPABASE_URL="${SUPABASE_URL}" --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
+# استخدام صيغة = مع الخيارات لضمان التعرف عليها بشكل صحيح وتجنب أخطاء التفسير
+flutter build web --release \
+  --web-renderer=html \
+  --base-href=/ \
+  --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
+  --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}"
 
-# 6. تجهيز مجلد المخرجات لـ Vercel
+# 7. تجهيز مجلد المخرجات لـ Vercel
 echo "Preparing public directory for deployment..."
 rm -rf public
 mkdir -p public
