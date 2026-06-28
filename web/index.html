@@ -4,28 +4,13 @@
   <base href="/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Repair Management System">
-
   <title>Repair System</title>
   <link rel="manifest" href="manifest.json">
-
-  <!-- سكربت فلاتر الأساسي -->
-  <script src="flutter.js" defer></script>
+  <!-- flutter_bootstrap.js يتم توليده تلقائياً أثناء البناء ويحتوي على كل الإعدادات الصحيحة -->
+  <script src="flutter_bootstrap.js" async></script>
 </head>
 <body>
-  <script>
-    window.addEventListener('load', function(ev) {
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: null,
-        },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
-    });
-  </script>
 </body>
 </html>
