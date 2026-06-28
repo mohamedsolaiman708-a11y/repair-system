@@ -263,13 +263,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               const SizedBox(height: 16),
               if (filteredRepairs.isEmpty)
-                Card(
+                const Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: EdgeInsets.all(32.0),
                     child: Center(
                       child: Text(
                         'No repair orders registered yet.',
-                        style: const TextStyle(color: Colors.grey),
+                        style: TextStyle(color: Colors.grey),
                       ),
                     ),
                   ),
