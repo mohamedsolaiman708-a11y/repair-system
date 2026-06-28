@@ -7,10 +7,9 @@ import 'core/constants/supabase_constants.dart';
 import 'core/utils/logger.dart';
 
 void main() {
-  // 1. ضمان تشغيل المحرك فوراً لتقليل وقت ظهور الشاشة البيضاء
+  // 1. تشغيل المحرك فوراً لضمان عدم ظهور شاشة بيضاء
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 2. تشغيل التطبيق فوراً بدون انتظار أي await في الـ main
   runApp(
     const ProviderScope(
       child: AppLauncher(),
@@ -20,7 +19,6 @@ void main() {
 
 class AppLauncher extends StatefulWidget {
   const AppLauncher({super.key});
-
   @override
   State<AppLauncher> createState() => _AppLauncherState();
 }
@@ -37,9 +35,9 @@ class _AppLauncherState extends State<AppLauncher> {
 
   Future<void> _initApp() async {
     try {
-      // التحقق من المتغيرات قبل البدء
+      // 2. فحص المتغيرات قبل البدء
       if (SupabaseConstants.url.isEmpty || SupabaseConstants.anonKey.isEmpty) {
-        throw 'Environment Variables (SUPABASE_URL/KEY) are missing in Vercel settings.';
+        throw 'Environment Variables (URL/KEY) are missing in Vercel settings.';
       }
 
       await Supabase.initialize(
@@ -47,16 +45,17 @@ class _AppLauncherState extends State<AppLauncher> {
         anonKey: SupabaseConstants.anonKey,
       );
       
-      Log.i('Supabase Initialized');
+      Log.i('Supabase Ready');
       if (mounted) setState(() => _initialized = true);
     } catch (e, stack) {
-      Log.e('Initialization Failed', e, stack);
+      Log.e('Initialization Error', e, stack);
       if (mounted) setState(() => _error = e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 3. عرض الخطأ بشكل بصري بدلاً من الشاشة البيضاء
     if (_error != null) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -68,9 +67,9 @@ class _AppLauncherState extends State<AppLauncher> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                  const SizedBox(height: 20),
-                  const Text('حدث خطأ في تشغيل النظام', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
+                  const Text('حدث خطأ في الإقلاع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
                   Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
                 ],
               ),
@@ -80,19 +79,13 @@ class _AppLauncherState extends State<AppLauncher> {
       );
     }
 
+    // 4. لودر بسيط لحد ما سوبابيس يجهز
     if (!_initialized) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 20),
-                Text('جاري تحميل النظام...', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
+            child: CircularProgressIndicator(),
           ),
         ),
       );
