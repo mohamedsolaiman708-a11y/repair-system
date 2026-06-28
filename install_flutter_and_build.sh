@@ -7,4 +7,5 @@ export PATH="$PATH:`pwd`/flutter/bin"
 
 # 2. Build
 flutter pub get
-flutter build web --release --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+# إجبار استخدام html renderer لضمان السرعة والتوافق
+flutter build web --release --web-renderer html --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY

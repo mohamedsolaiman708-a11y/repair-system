@@ -3,62 +3,115 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
-import 'core/utils/logger.dart';
 import 'core/constants/supabase_constants.dart';
+import 'core/utils/logger.dart';
 
-void main() async {
+void main() {
+  // 1. بدء تشغيل المحرك فوراً
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 2. تشغيل التطبيق بدون انتظار الـ Init لضمان عدم بقاء الشاشة بيضاء
+  runApp(
+    const ProviderScope(
+      child: AppBootstrap(),
+    ),
+  );
+}
 
-  try {
-    // 1. التحقق من وجود المتغيرات
-    if (SupabaseConstants.url.isEmpty || SupabaseConstants.anonKey.isEmpty) {
-      throw Exception(
-        'المتغيرات (Environment Variables) مفقودة!\n'
-        'تأكد من إضافة SUPABASE_URL و SUPABASE_ANON_KEY في إعدادات Vercel.'
+class AppBootstrap extends StatefulWidget {
+  const AppBootstrap({super.key});
+
+  @override
+  State<AppBootstrap> createState() => _AppBootstrapState();
+}
+
+class _AppBootstrapState extends State<AppBootstrap> {
+  bool _initialized = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    try {
+      // التأكد من وصول المتغيرات من Vercel
+      if (SupabaseConstants.url.isEmpty || SupabaseConstants.anonKey.isEmpty) {
+        throw 'Environment variables (SUPABASE_URL/KEY) are missing. Check Vercel settings.';
+      }
+
+      await Supabase.initialize(
+        url: SupabaseConstants.url,
+        anonKey: SupabaseConstants.anonKey,
       );
+      
+      Log.i('Supabase Initialized');
+      
+      if (mounted) {
+        setState(() => _initialized = true);
+      }
+    } catch (e, stack) {
+      Log.e('Initialization Failed', e, stack);
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
     }
+  }
 
-    // 2. محاولة تشغيل Supabase
-    await Supabase.initialize(
-      url: SupabaseConstants.url,
-      anonKey: SupabaseConstants.anonKey,
-    );
-    Log.i('Supabase successfully initialized.');
-
-    runApp(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
-  } catch (e, stack) {
-    Log.e('Failed to initialize app', e, stack);
-    
-    // 3. عرض الخطأ على الشاشة بدلاً من الصفحة البيضاء لكي نعرف السبب
-    runApp(
-      MaterialApp(
+  @override
+  Widget build(BuildContext context) {
+    // في حالة وجود خطأ، نعرضه بشكل واضح
+    if (_error != null) {
+      return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          body: Container(
-            color: Colors.white,
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 60),
                   const SizedBox(height: 20),
-                  const Text('حدث خطأ في تشغيل النظام', 
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
-                  const SizedBox(height: 12),
-                  Text(e.toString(), textAlign: TextAlign.center, 
-                    style: const TextStyle(color: Colors.redAccent, fontFamily: 'monospace')),
+                  const Text('خطأ في تهيئة النظام', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
+                  Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => setState(() { _error = null; _initApp(); }),
+                    child: const Text('إعادة المحاولة'),
+                  )
                 ],
               ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
+
+    // في حالة التحميل، نعرض مؤشر تحميل (بدلاً من الشاشة البيضاء)
+    if (!_initialized) {
+      return const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 20),
+                Text('جاري تحميل النظام...', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // عندما يكون كل شيء جاهزاً، نشغل التطبيق الأصلي
+    return const MyApp();
   }
 }
 
