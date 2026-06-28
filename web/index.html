@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="/">
+  <meta charset="UTF-8">
+  <title>Repair System - Debug Mode</title>
+  
+  <style>
+    body { background: #000; color: #0f0; font-family: monospace; padding: 20px; }
+    #debug-output { border: 1px solid #333; padding: 10px; margin-top: 20px; white-space: pre-wrap; color: red; }
+  </style>
+
+  <script>
+    // كاشف الأخطاء الفوري
+    window.onerror = function(msg, url, line) {
+      const out = document.getElementById('debug-output');
+      out.style.display = 'block';
+      out.innerText += '\nERROR: ' + msg + '\nURL: ' + url + '\nLine: ' + line + '\n';
+    };
+  </script>
+
+  <script src="flutter.js" defer></script>
+</head>
+<body>
+  <div id="status">جاري فحص ملفات Flutter...</div>
+  <div id="debug-output" style="display:none;"></div>
+
+  <script>
+    window.addEventListener('load', function(ev) {
+      document.getElementById('status').innerText = 'تم تحميل flutter.js - جاري بدء المحرك...';
+      
+      _flutter.loader.loadEntrypoint({
+        onEntrypointLoaded: function(engineInitializer) {
+          document.getElementById('status').innerText = 'تم تحميل المدخلات - جاري تشغيل المحرك...';
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            document.getElementById('status').innerText = 'المحرك جاهز - جاري تشغيل التطبيق...';
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
