@@ -32,24 +32,20 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.dashboard,
     redirect: (context, state) {
-      // إذا كان التطبيق لا يزال يحمل حالة تسجيل الدخول، لا تفعل شيئاً
       if (authState.isLoading) return null;
 
       final isLoggedIn = authState.value != null;
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
-      // إذا لم يسجل الدخول وليس في صفحة اللوجن، اذهب للوجن
       if (!isLoggedIn && !isLoggingIn) {
         return AppRoutes.login;
       }
-      
-      // إذا سجل الدخول وهو في صفحة اللوجن، اذهب للرئيسية
       if (isLoggedIn && isLoggingIn) {
         return AppRoutes.dashboard;
       }
-
-      // في أي حالة أخرى، ابقَ في نفس الصفحة (لا ترجع AppRoutes.dashboard دائماً!)
-      return null;
+      
+      // إرجاع null يعني البقاء في الصفحة الحالية دون إعادة توجيه
+      return null; 
     },
     routes: [
       GoRoute(
