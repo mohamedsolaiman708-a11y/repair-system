@@ -373,6 +373,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       case RepairStatus.cancelled:
       case RepairStatus.notRepairable:
         return AppTheme.kError;
+      default:
+        return Colors.grey;
     }
   }
 }
