@@ -27,22 +27,29 @@ class AppRoutes {
 }
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Watch auth state to perform redirects
   final authState = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.dashboard,
     redirect: (context, state) {
+      // إذا كان التطبيق لا يزال يحمل حالة تسجيل الدخول، لا تفعل شيئاً
+      if (authState.isLoading) return null;
+
       final isLoggedIn = authState.value != null;
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
+      // إذا لم يسجل الدخول وليس في صفحة اللوجن، اذهب للوجن
       if (!isLoggedIn && !isLoggingIn) {
         return AppRoutes.login;
       }
+      
+      // إذا سجل الدخول وهو في صفحة اللوجن، اذهب للرئيسية
       if (isLoggedIn && isLoggingIn) {
         return AppRoutes.dashboard;
       }
-      return AppRoutes.dashboard;
+
+      // في أي حالة أخرى، ابقَ في نفس الصفحة (لا ترجع AppRoutes.dashboard دائماً!)
+      return null;
     },
     routes: [
       GoRoute(

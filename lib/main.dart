@@ -5,11 +5,17 @@ import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'core/constants/supabase_constants.dart';
 import 'core/utils/logger.dart';
+import 'dart:developer' as dev;
 
 void main() {
-  // 1. تشغيل المحرك فوراً لضمان عدم ظهور شاشة بيضاء
+  // 1. تشغيل المحرك فوراً
   WidgetsFlutterBinding.ensureInitialized();
   
+  // 2. التقاط أخطاء الفريمورك
+  FlutterError.onError = (details) {
+    dev.log('Flutter Error: ${details.exception}', error: details.exception, stackTrace: details.stack);
+  };
+
   runApp(
     const ProviderScope(
       child: AppLauncher(),
@@ -35,9 +41,10 @@ class _AppLauncherState extends State<AppLauncher> {
 
   Future<void> _initApp() async {
     try {
-      // 2. فحص المتغيرات قبل البدء
+      dev.log('Supabase: Initializing with URL: ${SupabaseConstants.url}');
+      
       if (SupabaseConstants.url.isEmpty || SupabaseConstants.anonKey.isEmpty) {
-        throw 'Environment Variables (URL/KEY) are missing in Vercel settings.';
+        throw 'Environment Variables (URL/KEY) are empty. Check Vercel Environment Variables settings.';
       }
 
       await Supabase.initialize(
@@ -45,17 +52,17 @@ class _AppLauncherState extends State<AppLauncher> {
         anonKey: SupabaseConstants.anonKey,
       );
       
-      Log.i('Supabase Ready');
+      dev.log('Supabase: Ready');
       if (mounted) setState(() => _initialized = true);
     } catch (e, stack) {
-      Log.e('Initialization Error', e, stack);
+      dev.log('Supabase: Init Error', error: e, stackTrace: stack);
       if (mounted) setState(() => _error = e.toString());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 3. عرض الخطأ بشكل بصري بدلاً من الشاشة البيضاء
+    // عرض رسالة خطأ واضحة بدلاً من الشاشة البيضاء
     if (_error != null) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -67,10 +74,15 @@ class _AppLauncherState extends State<AppLauncher> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.error_outline, color: Colors.red, size: 60),
-                  const SizedBox(height: 16),
-                  const Text('حدث خطأ في الإقلاع', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 20),
+                  const Text('System Error', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.redAccent)),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => _initApp(),
+                    child: const Text('Try Again'),
+                  ),
                 ],
               ),
             ),
@@ -79,7 +91,7 @@ class _AppLauncherState extends State<AppLauncher> {
       );
     }
 
-    // 4. لودر بسيط لحد ما سوبابيس يجهز
+    // لودر انتظار سوبابيس
     if (!_initialized) {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
