@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "if [ ! -d \"f\" ]; then git clone https://github.com/flutter/flutter -b stable --depth 1 f; fi && ./f/bin/flutter config --enable-web && ./f/bin/flutter build web --release --web-renderer=html --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY",
+  "buildCommand": "git clone https://github.com/flutter/flutter -b stable --depth 1 f && f/bin/flutter config --enable-web && f/bin/flutter build web --release --web-renderer=html --dart-define=SUPABASE_URL=$SUPABASE_URL --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY\n",
   "outputDirectory": "build/web",
   "headers": [
     {
