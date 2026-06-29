@@ -15,37 +15,38 @@ import 'package:repair_center_syste/features/settings/presentation/screens/setti
 class AppRoutes {
   static const String login = '/login';
   static const String dashboard = '/';
-  
   static const String repairs = '/repairs';
   static const String newRepair = '/repairs/new';
   static const String repairDetails = '/repairs/:id';
-
   static const String customers = '/customers';
   static const String technicians = '/technicians';
   static const String reports = '/reports';
   static const String settings = '/settings';
 }
 
+// إنشاء Provider خاص لمراقبة حالة التنقل ومنع الشاشة البيضاء
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authNotifier = ref.watch(authProvider);
 
   return GoRouter(
     initialLocation: AppRoutes.dashboard,
+    debugLogDiagnostics: true, // لإظهار تفاصيل التنقل في الكونسول
     redirect: (context, state) {
-      if (authState.isLoading) return null;
+      // إذا كان التطبيق لا يزال يحمل البيانات، لا تقم بأي إعادة توجيه
+      if (authNotifier.isLoading) return null;
 
-      final isLoggedIn = authState.value != null;
+      final isLoggedIn = authNotifier.value != null;
       final isLoggingIn = state.matchedLocation == AppRoutes.login;
 
-      if (!isLoggedIn && !isLoggingIn) {
-        return AppRoutes.login;
+      if (!isLoggedIn) {
+        return isLoggingIn ? null : AppRoutes.login;
       }
+
       if (isLoggedIn && isLoggingIn) {
         return AppRoutes.dashboard;
       }
-      
-      // إرجاع null يعني البقاء في الصفحة الحالية دون إعادة توجيه
-      return null; 
+
+      return null;
     },
     routes: [
       GoRoute(

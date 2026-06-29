@@ -14,55 +14,44 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl(client);
 });
 
+// مراقبة تغييرات حالة تسجيل الدخول بشكل منفصل
 final authStateChangesProvider = StreamProvider<UserEntity?>((ref) {
   final repo = ref.watch(authRepositoryProvider);
   return repo.onAuthStateChanged;
 });
 
 class AuthNotifier extends AsyncNotifier<UserEntity?> {
-  late final AuthRepository _repository;
-
   @override
   FutureOr<UserEntity?> build() async {
-    _repository = ref.watch(authRepositoryProvider);
+    final repository = ref.watch(authRepositoryProvider);
     
-    // Listen to Supabase session state changes
-    ref.listen(authStateChangesProvider, (previous, next) {
-      if (next.hasValue) {
-        state = AsyncValue.data(next.value);
-      }
-    });
-
-    final userResult = await _repository.getCurrentUser();
-    return userResult.fold(
-      (user) => user,
-      (failure) => null,
+    // بدلاً من Listen داخل Build، سنعتمد على الـ StreamProvider لتحديث الحالة
+    final stream = ref.watch(authStateChangesProvider);
+    
+    return stream.when(
+      data: (user) => user,
+      loading: () => null, // أو يمكنك جلب المستخدم الحالي كقيمة ابتدائية
+      error: (_, __) => null,
     );
   }
 
   Future<void> login(String email, String password) async {
     state = const AsyncValue.loading();
-    final result = await _repository.login(email: email, password: password);
-    result.fold(
-      (user) {
-        state = AsyncValue.data(user);
-      },
-      (failure) {
-        state = AsyncValue.error(failure, StackTrace.current);
-      },
+    final repository = ref.watch(authRepositoryProvider);
+    final result = await repository.login(email: email, password: password);
+    state = result.fold(
+      (user) => AsyncValue.data(user),
+      (failure) => AsyncValue.error(failure, StackTrace.current),
     );
   }
 
   Future<void> logout() async {
     state = const AsyncValue.loading();
-    final result = await _repository.logout();
-    result.fold(
-      (_) {
-        state = const AsyncValue.data(null);
-      },
-      (failure) {
-        state = AsyncValue.error(failure, StackTrace.current);
-      },
+    final repository = ref.watch(authRepositoryProvider);
+    final result = await repository.logout();
+    state = result.fold(
+      (_) => const AsyncValue.data(null),
+      (failure) => AsyncValue.error(failure, StackTrace.current),
     );
   }
 }

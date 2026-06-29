@@ -4,24 +4,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_routes.dart';
 import 'core/constants/supabase_constants.dart';
-import 'dart:developer' as dev;
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // تحويل أي خطأ في الواجهة لرسالة نصية بدلاً من الشاشة البيضاء
+  // صائد أخطاء شامل لعرض أي مشكلة بدلاً من الشاشة البيضاء
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.red.shade900,
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
-            child: Text(
-              'Fatal Error: ${details.exception}',
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                const Icon(Icons.bug_report, color: Colors.white, size: 50),
+                const SizedBox(height: 10),
+                const Text('Runtime Error:', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                SelectableText(
+                  '${details.exception}\n\n${details.stack}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 10, fontFamily: 'monospace'),
+                ),
+              ],
             ),
           ),
         ),
@@ -29,87 +33,36 @@ void main() {
     );
   };
 
-  runApp(
-    const ProviderScope(
-      child: AppLauncher(),
-    ),
-  );
-}
+  try {
+    // تنظيف المتغيرات من أي علامات تنصيص زائدة قد يضعها Vercel
+    final url = SupabaseConstants.url.replaceAll('"', '').replaceAll("'", "").trim();
+    final key = SupabaseConstants.anonKey.replaceAll('"', '').replaceAll("'", "").trim();
 
-class AppLauncher extends StatefulWidget {
-  const AppLauncher({super.key});
-  @override
-  State<AppLauncher> createState() => _AppLauncherState();
-}
+    print('DEBUG: Supabase URL length: ${url.length}');
 
-class _AppLauncherState extends State<AppLauncher> {
-  bool _initialized = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _initApp();
-  }
-
-  Future<void> _initApp() async {
-    try {
-      dev.log('Checking environment variables...');
-      
-      final url = SupabaseConstants.url;
-      final key = SupabaseConstants.anonKey;
-
-      if (url.isEmpty || key.isEmpty) {
-        throw 'Supabase keys are empty! Check your Vercel Environment Variables.';
-      }
-
-      if (!url.startsWith('http')) {
-        throw 'Invalid Supabase URL format. It should start with https://';
-      }
-
-      await Supabase.initialize(url: url, anonKey: key);
-      
-      if (mounted) setState(() => _initialized = true);
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+    if (url.isEmpty || key.isEmpty) {
+      throw 'Environment Variables (SUPABASE_URL/KEY) are missing in Vercel!';
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.warning, color: Colors.orange, size: 50),
-                const SizedBox(height: 20),
-                const Text('Initialization Failed', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
-                  child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red)),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(onPressed: () => _initApp(), child: const Text('Retry')),
-              ],
-            ),
+    await Supabase.initialize(url: url, anonKey: key);
+
+    runApp(
+      const ProviderScope(
+        child: MyApp(),
+      ),
+    );
+  } catch (e, stack) {
+    print('CRITICAL INIT ERROR: $e');
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: SelectableText('Initialization Failed: $e\n\n$stack'),
           ),
         ),
-      );
-    }
-
-    if (!_initialized) {
-      return const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
-    }
-
-    return const MyApp();
+      ),
+    ));
   }
 }
 
@@ -119,6 +72,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    
     return MaterialApp.router(
       title: 'Repair System',
       debugShowCheckedModeBanner: false,
