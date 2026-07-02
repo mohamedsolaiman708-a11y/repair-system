@@ -19,23 +19,28 @@
   <script src="flutter.js" defer></script>
   <script>
     window.addEventListener('load', function(ev) {
-      console.log("Loading Flutter App...");
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: null,
+      // استخدام الطريقة الحديثة _flutter.loader.load بدلاً من loadEntrypoint
+      _flutter.loader.load({
+        serviceWorkerSettings: {
+          serviceWorkerVersion: null, // تعطيل الـ service worker لتجنب مشاكل الكاش في Vercel
         },
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine({
-            renderer: "html"
-          }).then(function(appRunner) {
+        onEntrypointLoaded: async function(engineInitializer) {
+          try {
+            const appRunner = await engineInitializer.initializeEngine({
+              renderer: "html", // إجبار المتصفح على نمط HTML لضمان أعلى توافقية
+              useColorEmoji: true
+            });
+            
+            // إزالة مؤشر التحميل عند جاهزية التطبيق
             var loader = document.getElementById('loading-indicator');
             if (loader) loader.remove();
-            appRunner.runApp();
-          }).catch(function(err) {
-            console.error("Engine Init Failed:", err);
-            document.getElementById('loading-text').innerText = "خطأ في تحميل المحرك: " + err;
+            
+            await appRunner.runApp();
+          } catch (err) {
+            console.error("Initialization failed:", err);
+            document.getElementById('loading-text').innerText = "فشل في بدء النظام: " + err;
             document.getElementById('loading-text').style.color = "red";
-          });
+          }
         }
       });
     });
